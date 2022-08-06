@@ -1,5 +1,5 @@
 import { createHash } from "https://deno.land/std@0.77.0/hash/mod.ts";
-import { TrekNode } from "./index.ts";
+import { TrekNode } from "./TrekNode.ts";
 
 export const RingSettings = {
 	hexLength: 6,
