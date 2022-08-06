@@ -1,0 +1,11 @@
+{
+  "name": "trek_db",
+  "version": "0.0.1",
+  "description": "A Distributed Data storage",
+  "main": "index.ts",
+  "scripts": {
+    "run": "deno run --allow-net --watch index.ts"
+  },
+  "author": "Tobias Beßenreither",
+  "license": "ISC"
+}
