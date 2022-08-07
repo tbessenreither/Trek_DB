@@ -1,12 +1,14 @@
 import { TrekNodeServer, TrekNodeServerPackage } from "./TrekNodeServer.ts";
-import { hash, register, lookupNode } from './TrekRing.ts';
+import { TrekRing } from './TrekRing.ts';
+import { TrekNodeInterface, TrekNodeServerInfo } from './TrekNodeInterface.ts';
 
 /**
  * The basic config for a TrekNode
  */
-type TrekNodeConfig = {
+export type TrekNodeConfig = {
 	name: string,
 	port: number,
+	nodes: string[],
 };
 
 /**
@@ -16,15 +18,13 @@ type TrekNodeConfig = {
  */
 export class TrekNode {
 	#config: TrekNodeConfig;
-	#nodeHash?: number;
 
+	#ring = new TrekRing();
 	#server: TrekNodeServer;
-
 
 	constructor(config: TrekNodeConfig) {
 		this.#config = config;
 
-		this.#nodeHash = hash(config.name);
 		this.#registerNodesInRing();
 
 		this.#server = new TrekNodeServer(config.port);
@@ -33,17 +33,30 @@ export class TrekNode {
 		this.#server.events.on('command-Test', this.#onTest.bind(this));
 		this.#server.events.on('command-ServerSettingsName', this.#onServerSettingsName.bind(this));
 		this.#server.events.on('command-ServerLookup', this.#onServerLookup.bind(this));
+		this.#server.events.on('command-ServerInfo', this.#onServerInfo.bind(this));
 
+		this.#server.events.on('command-DataStore', this.#onDataStore.bind(this));
+
+	}
+
+	/**
+	 * @returns the name of the node
+	 */
+	getName(): string {
+		return this.#config.name;
+	}
+
+	toString() {
+		return `TrekNode ${this.#config.name}`;
 	}
 
 	/**
 	 * Method to register this and all other known Nodes into the TrekRing module for future lookup
 	 */
 	#registerNodesInRing(): void {
-		//register self
-		register(this.#config.name, this);
-		//register other nodes
-		//todo: register other known nodes
+		for (const nodeAddress of this.#config.nodes) {
+			this.#ring.register(new TrekNodeInterface(nodeAddress));
+		}
 	}
 
 	// from here on are server request event Handlers
@@ -64,19 +77,27 @@ export class TrekNode {
 			const testName = `teststring-${i}`;
 			results.push({
 				name: testName,
-				//hash: hash(testName),
-				lookup: lookupNode(testName).#config?.name,
+				hash: this.#ring.hash(testName),
+				lookup: this.#ring.lookupNode(testName).get('name'),
 			});
 		}
 
 		trekServerPackage.response.success(results);
 	}
 
-	#onRequest(trekServerPackage: TrekNodeServerPackage): void {
+	#onServerInfo(trekServerPackage: TrekNodeServerPackage): void {
+		const serverInfo: TrekNodeServerInfo = {
+			name: this.#config.name,
+			port: this.#config.port,
+			nodes: this.#ring.getHashNameLookup(),
+		};
+		trekServerPackage.response.success(serverInfo);
+	}
+
+	#onDataStore(trekServerPackage: TrekNodeServerPackage): void {
 		trekServerPackage.response.success({
-			other: "things",
-			moep: [1, 3, 5],
-			message: "Hello World!!",
+			node: 1,
+			hash: this.#ring.hash('test'),
 		});
 	}
 }

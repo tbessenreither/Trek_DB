@@ -1,6 +1,6 @@
 # Trek DB
 
-A distributed node / shard / replica based data storage system based on Ring or
+A distributed node / replica based data storage system based on Ring or
 Consistent Hashing.
 
 Written in Typescript on deno

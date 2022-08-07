@@ -144,24 +144,28 @@ export class TrekNodeServer {
 		const httpConn = Deno.serveHttp(conn);
 
 		for await (const requestEvent of httpConn) {
-			const trekNodeServerPackage = new TrekNodeServerPackage((response) => {
-				requestEvent.respondWith(
-					new Response(response.getBody(), {
-						status: response.getCode(),
-						headers: {
-							"content-type": response.getContentType(),
-						},
-					}),
-				);
-			});
-
-			trekNodeServerPackage.method = requestEvent.request.method;
-			trekNodeServerPackage.url = this.#urlRemoveDomain(requestEvent.request.url);
-			trekNodeServerPackage.command = this.#urlToCommand(requestEvent.request.url);
-
-			this.events.emit('package', trekNodeServerPackage);
-			this.events.emit(`command-${trekNodeServerPackage.command}`, trekNodeServerPackage);
+			this.#handle(requestEvent);
 		}
+	}
+
+	#handle(requestEvent: Deno.RequestEvent) {
+		const trekNodeServerPackage = new TrekNodeServerPackage((response) => {
+			requestEvent.respondWith(
+				new Response(response.getBody(), {
+					status: response.getCode(),
+					headers: {
+						"content-type": response.getContentType(),
+					},
+				}),
+			).catch(() => { });
+		});
+
+		trekNodeServerPackage.method = requestEvent.request.method;
+		trekNodeServerPackage.url = this.#urlRemoveDomain(requestEvent.request.url);
+		trekNodeServerPackage.command = this.#urlToCommand(requestEvent.request.url);
+
+		this.events.emit('package', trekNodeServerPackage);
+		this.events.emit(`command-${trekNodeServerPackage.command}`, trekNodeServerPackage);
 	}
 
 

@@ -2,14 +2,20 @@ import { TrekNode } from './TrekNode.ts';
 
 const Config = {
 	startingPort: 10000,
+	numberOfInstances: 3,
 };
 
+const nodeAddresses: string[] = [];
+for (let i = 0; i < Config.numberOfInstances; i++) {
+	nodeAddresses.push(`http://localhost:${Config.startingPort + i}`);
+}
 
 let instanceNumber = 0;
 function spinnUpInstance() {
 	const instance = new TrekNode({
-		name: `TrekNode ${instanceNumber}`,
+		name: `TrekNode-${instanceNumber}`,
 		port: Config.startingPort + instanceNumber,
+		nodes: nodeAddresses,
 	});
 	instanceNumber++;
 
@@ -23,6 +29,5 @@ function spinnUpInstances(number: number) {
 	}
 }
 
-spinnUpInstances(2);
+spinnUpInstances(Config.numberOfInstances);
 //console.log(instances);
-
